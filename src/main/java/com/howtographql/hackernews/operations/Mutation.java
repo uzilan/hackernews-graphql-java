@@ -2,22 +2,25 @@ package com.howtographql.hackernews.operations;
 
 import com.coxautodev.graphql.tools.GraphQLRootResolver;
 import com.howtographql.hackernews.AuthContext;
-import com.howtographql.hackernews.models.AuthData;
-import com.howtographql.hackernews.models.Link;
-import com.howtographql.hackernews.models.SigninPayload;
-import com.howtographql.hackernews.models.User;
+import com.howtographql.hackernews.models.*;
 import com.howtographql.hackernews.repositories.LinkRepository;
 import com.howtographql.hackernews.repositories.UserRepository;
+import com.howtographql.hackernews.repositories.VoteRepository;
 import graphql.GraphQLException;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.Data;
 import lombok.val;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Data
 public class Mutation implements GraphQLRootResolver {
 
     private final LinkRepository linkRepository;
     private final UserRepository userRepository;
+    private final VoteRepository voteRepository;
 
     //The way to inject the context is via DataFetchingEnvironment
     public Link createLink(String url, String description, DataFetchingEnvironment env) {
@@ -38,5 +41,10 @@ public class Mutation implements GraphQLRootResolver {
             return new SigninPayload(user.getId(), user);
         }
         throw new GraphQLException("Invalid credentials");
+    }
+
+    public Vote createVote(String linkId, String userId) {
+        ZonedDateTime now = Instant.now().atZone(ZoneOffset.UTC);
+        return voteRepository.saveVote(new Vote(now, userId, linkId));
     }
 }
