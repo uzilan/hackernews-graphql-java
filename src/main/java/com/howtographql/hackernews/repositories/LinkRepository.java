@@ -3,6 +3,7 @@ package com.howtographql.hackernews.repositories;
 import com.howtographql.hackernews.models.Link;
 import com.mongodb.client.MongoCollection;
 import lombok.Data;
+import lombok.val;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -17,14 +18,20 @@ public class LinkRepository {
     private final MongoCollection<Document> links;
 
     public Link findById(String id) {
-        Document doc = links.find(eq("_id", new ObjectId(id))).first();
+        val doc = links.find(eq("_id", new ObjectId(id))).first();
         return link(doc);
     }
 
     public List<Link> getAllLinks() {
-        List<Link> allLinks = new ArrayList<>();
+        val allLinks = new ArrayList<com.howtographql.hackernews.models.Link>();
         for (Document doc : links.find()) {
-            allLinks.add(link(doc));
+            Link link = new Link(
+                    doc.get("_id").toString(),
+                    doc.getString("url"),
+                    doc.getString("description"),
+                    doc.getString("postedBy")
+            );
+            allLinks.add(link);
         }
         return allLinks;
     }
@@ -33,6 +40,7 @@ public class LinkRepository {
         Document doc = new Document();
         doc.append("url", link.getUrl());
         doc.append("description", link.getDescription());
+        doc.append("postedBy", link.getUserId());
         links.insertOne(doc);
     }
 

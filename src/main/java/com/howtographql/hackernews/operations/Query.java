@@ -1,4 +1,4 @@
-package com.howtographql.hackernews.opreations;
+package com.howtographql.hackernews.operations;
 
 import com.coxautodev.graphql.tools.GraphQLRootResolver;
 import com.howtographql.hackernews.models.Link;
