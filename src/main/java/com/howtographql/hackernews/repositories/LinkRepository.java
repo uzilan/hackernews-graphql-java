@@ -2,6 +2,7 @@ package com.howtographql.hackernews.repositories;
 
 import com.howtographql.hackernews.models.Link;
 import com.howtographql.hackernews.models.LinkFilter;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import lombok.Data;
 import lombok.val;
@@ -39,11 +40,12 @@ public class LinkRepository {
         return allLinks;
     }
 
-    public List<Link> getAllLinks(LinkFilter filter) {
-        val mongoFilter = Optional.ofNullable(filter).map(this::buildFilter);
+    public List<Link> getAllLinks(LinkFilter filter, int skip, int first) {
+        Optional<Bson> mongoFilter = Optional.ofNullable(filter).map(this::buildFilter);
 
-        val allLinks = new ArrayList<Link>();
-        for (Document doc : mongoFilter.map(links::find).orElseGet(links::find)) {
+        List<Link> allLinks = new ArrayList<>();
+        FindIterable<Document> documents = mongoFilter.map(links::find).orElseGet(links::find);
+        for (Document doc : documents.skip(skip).limit(first)) {
             allLinks.add(link(doc));
         }
         return allLinks;
