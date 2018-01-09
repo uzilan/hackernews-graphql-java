@@ -1,16 +1,19 @@
 package com.howtographql.hackernews.repositories;
 
 import com.howtographql.hackernews.models.Link;
+import com.howtographql.hackernews.models.LinkFilter;
 import com.mongodb.client.MongoCollection;
 import lombok.Data;
 import lombok.val;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 @Data
 public class LinkRepository {
@@ -36,8 +39,36 @@ public class LinkRepository {
         return allLinks;
     }
 
+    public List<Link> getAllLinks(LinkFilter filter) {
+        val mongoFilter = Optional.ofNullable(filter).map(this::buildFilter);
+
+        val allLinks = new ArrayList<Link>();
+        for (Document doc : mongoFilter.map(links::find).orElseGet(links::find)) {
+            allLinks.add(link(doc));
+        }
+        return allLinks;
+    }
+
+    //builds a Bson from a LinkFilter
+    private Bson buildFilter(LinkFilter filter) {
+        val descriptionPattern = filter.getDescriptionContains();
+        val urlPattern = filter.getUrlContains();
+        Bson descriptionCondition = null;
+        Bson urlCondition = null;
+        if (descriptionPattern != null && !descriptionPattern.isEmpty()) {
+            descriptionCondition = regex("description", ".*" + descriptionPattern + ".*", "i");
+        }
+        if (urlPattern != null && !urlPattern.isEmpty()) {
+            urlCondition = regex("url", ".*" + urlPattern + ".*", "i");
+        }
+        if (descriptionCondition != null && urlCondition != null) {
+            return and(descriptionCondition, urlCondition);
+        }
+        return descriptionCondition != null ? descriptionCondition : urlCondition;
+    }
+
     public void saveLink(Link link) {
-        Document doc = new Document();
+        val doc = new Document();
         doc.append("url", link.getUrl());
         doc.append("description", link.getDescription());
         doc.append("postedBy", link.getUserId());
